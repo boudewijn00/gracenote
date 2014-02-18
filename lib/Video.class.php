@@ -10,13 +10,14 @@ class Video
     // Constants
     const BEST_MATCH_ONLY = 0; // Will put API into "SINGLE_BEST" mode.
     const ALL_RESULTS     = 1;
-
-    private $_client = null;
     
+    // Supported commands
     const AV_WORK_SEARCH = "AV_WORK_SEARCH";
     const AV_WORK_FETCH = "AV_WORK_FETCH";
     const SERIES_FETCH = "SERIES_FETCH";
     const CONTRIBUTOR_SEARCH = "CONTRIBUTOR_SEARCH";
+    
+    private $_client = null;
 
     // Constructor
     public function __construct(Client $client)
@@ -24,6 +25,7 @@ class Video
         $this->_client = $client;
     }
     
+    // Method to handle webapi request based on provided command and title input
     public function request($title,$command)
     {
     
@@ -38,8 +40,6 @@ class Video
         return $this->_execute($data);
         
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Simply executes the query to Gracenote WebAPI
     protected function _execute($data)
@@ -77,8 +77,8 @@ class Video
     {
         $body = "";
         
-        switch($command){
-            
+        switch($command)
+        {
             case \Gracenote\WebAPI\Video::AV_WORK_SEARCH:
                 $body .= "<TEXT TYPE=\"TITLE\">$title</TEXT>";
                 break;
@@ -103,12 +103,10 @@ class Video
                             <VALUE>IMAGE,MEDIAGRAPHY_IMAGES,LINK</VALUE>
                           </OPTION>";
                 break;
-            
         }
         
-        if(empty($body)){
-            throw new Exception('unsupported command');
-        }
+        // if we cant produce a body based on the command, throw an exception
+        if(empty($body)){ throw new Exception(Error::INVALID_INPUT_SPECIFIED, $command); }
         
         return $body;
     }
@@ -124,7 +122,7 @@ class Video
         }
         catch (Exception $e)
         {
-            //throw new GNException(GNError::UNABLE_TO_PARSE_RESPONSE);
+            throw new Exception(Error::UNABLE_TO_PARSE_RESPONSE);
         }
 
         // Get response status code.
@@ -133,10 +131,10 @@ class Video
         // Check for any error codes and handle accordingly.
         switch ($status)
         {
-            //case "ERROR":    throw new GNException(GNError::API_RESPONSE_ERROR, (string) $xml->MESSAGE); break;
-            //case "NO_MATCH": throw new GNException(GNError::API_NO_MATCH); break;
+            case "ERROR":    throw new Exception(Error::API_RESPONSE_ERROR, (string) $xml->MESSAGE); break;
+            case "NO_MATCH": throw new Exception(Error::API_NO_MATCH); break;
             default:
-                if ($status != "OK") { throw new GNException(GNError::API_NON_OK_RESPONSE, $status); }
+                if ($status != "OK") { throw new Exception(Error::API_NON_OK_RESPONSE, $status); }
         }
 
         return $xml;

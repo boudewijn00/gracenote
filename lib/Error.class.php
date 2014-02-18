@@ -5,7 +5,8 @@ namespace Gracenote\WebAPI;
 error_reporting(E_ALL);
 
 // Extend normal PHP exceptions by includes an additional information field we can utilize.
-class Exception extends \Exception{
+class Exception extends \Exception
+{
     
     private $_extInfo; // Additional information on the exception.
 
@@ -22,7 +23,8 @@ class Exception extends \Exception{
 }
 
 // A simple class to encapsulate errors that can be returned by the API.
-class Error{
+class Error
+{
     
     const UNABLE_TO_PARSE_RESPONSE = 1;    // The response couldn't be parsed. Maybe an error, or maybe the API changed.
 
