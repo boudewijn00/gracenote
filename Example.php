@@ -22,8 +22,10 @@ $client->register();
 // Client object is used to send video meta requests
 $video = new Gracenote\WebAPI\Video($client);
 
-//$results = $video->request("Jimmy Fallon","CONTRIBUTOR_SEARCH");
-$results = $video->request("238040098-9006FFB633AC73C062297CDB9B5851F7","SERIES_FETCH");
+$params = array("IMAGE","MEDIAGRAPHY_IMAGES","LINK");
+$results = $video->query("Jimmy Fallon","CONTRIBUTOR_SEARCH",$params);
+//$params = array("IMAGE","CONTRIBUTOR_IMAGE","VIDEODISCSET","VIDEODISCSET_COVERART","LINK","VIDEODISCSET","LINK","VIDEOPROPERTIES");
+//$results = $video->query("238040098-9006FFB633AC73C062297CDB9B5851F7","SERIES_FETCH",$params);
 
 var_dump($results);
 

@@ -22,11 +22,11 @@ class Video
     // Constructor
     public function __construct(Client $client)
     {
-        $this->_client = $client;
+        $this->_client = (object) $client;
     }
     
-    // Method to handle webapi request based on provided command and title input
-    public function request($title,$command)
+    // Method to query the Gracenote WEBAPI
+    public function query($title,$command,Array $params = null)
     {
     
         // Sanity checks
@@ -34,8 +34,8 @@ class Video
              throw new Exception(Error::UNABLE_TO_PARSE_RESPONSE);
         }
 
-        $body = $this->_constructQueryBody($title,$command);
-        $data = $this->_constructQueryRequest($body,$command);
+        $body = (string) $this->_constructQueryBody($title,$command,$params);
+        $data = (string) $this->_constructQueryRequest($body,$command);
         
         return $this->_execute($data);
         
@@ -45,7 +45,7 @@ class Video
     protected function _execute($data)
     {
         $request = new HTTP($this->_client->apiURL);
-        $response = $request->post($data);
+        $response = (string) $request->post($data);
         return $this->_parseResponse($response);
     }
 
@@ -73,10 +73,11 @@ class Video
     }
 
     // Constructs the main request body, including some default options for metadata, etc.
-    protected function _constructQueryBody($title,$command)
+    protected function _constructQueryBody($title,$command,Array $params = null)
     {
         $body = "";
         
+        // Set first part of body containing the TEXT TYPE, or GN_ID
         switch($command)
         {
             case \Gracenote\WebAPI\Video::AV_WORK_SEARCH:
@@ -84,28 +85,35 @@ class Video
                 break;
             case \Gracenote\WebAPI\Video::AV_WORK_FETCH:
                 $body .= "<GN_ID>$title</GN_ID>";
-                $body .= "<OPTION>
-                            <PARAMETER>SELECT_EXTENDED</PARAMETER>
-                            <VALUE>IMAGE,CONTRIBUTOR_IMAGE,VIDEODISCSET,VIDEODISCSET_COVERART,LINK,VIDEODISCSET, LINK,VIDEOPROPERTIES</VALUE>
-                          </OPTION>";
                 break;
             case \Gracenote\WebAPI\Video::SERIES_FETCH:
                 $body .= "<GN_ID>$title</GN_ID>";
-                $body .= "<OPTION>
-                            <PARAMETER>SELECT_EXTENDED</PARAMETER>
-                            <VALUE>IMAGE,CONTRIBUTOR_IMAGE,IMAGE_GALLERY,VIDEOPROPERTIES,LINK</VALUE>
-                          </OPTION>";
                 break;
             case \Gracenote\WebAPI\Video::CONTRIBUTOR_SEARCH:
                 $body .= "<TEXT TYPE=\"NAME\">$title</TEXT>";
-                $body .= "<OPTION>
-                            <PARAMETER>SELECT_EXTENDED</PARAMETER>
-                            <VALUE>IMAGE,MEDIAGRAPHY_IMAGES,LINK</VALUE>
-                          </OPTION>";
                 break;
         }
         
-        // if we cant produce a body based on the command, throw an exception
+        // If we have params to set in the query body
+        if(count($params) > 0)
+        {
+            $body .= "<OPTION><PARAMETER>SELECT_EXTENDED</PARAMETER>";
+            $body .= "<VALUE>";
+            
+            $i = 0;
+            
+            foreach($params AS $param)
+            {
+                $separator = ($i > 0)? "," : "";
+                $body .= $separator.$param;
+                $i++;
+            }
+            
+            $body .= "</VALUE>";
+            $body .= "</OPTION>";
+        }
+        
+        // If we cant produce a body based on the command, throw an exception
         if(empty($body)){ throw new Exception(Error::INVALID_INPUT_SPECIFIED, $command); }
         
         return $body;
